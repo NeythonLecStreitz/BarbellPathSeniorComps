@@ -1,0 +1,184 @@
+\documentclass[10pt,twocolumn]{article} 
+
+% required packages for Oxy Comps style
+\usepackage{oxycomps} % the main oxycomps style file
+\usepackage{times} % use Times as the default font
+\usepackage[style=numeric,sorting=nyt]{biblatex} % format the bibliography nicely
+
+\usepackage{amsfonts} % provides many math symbols/fonts
+\usepackage{listings} % provides the lstlisting environment
+\usepackage{amssymb} % provides many math symbols/fonts
+\usepackage{graphicx} % allows insertion of grpahics
+\usepackage{hyperref} % creates links within the page and to URLs
+\usepackage{url} % formats URLs properly
+\usepackage{verbatim} % provides the comment environment
+\usepackage{xpatch} % used to patch \textcite
+
+\bibliography{references}
+\DeclareNameAlias{default}{last-first}
+
+\xpatchbibmacro{textcite}
+  {\printnames{labelname}}
+  {\printnames{labelname} (\printfield{year})}
+  {}
+  {}
+
+\pdfinfo{
+    /Title (Raise The Bar: Barbell Path and Velocity Tracking Mobile App for Weightlifting)
+    /Author (Neython Lec Streitz)
+}
+
+\title{Raise The Bar: \\ Barbell Path and Velocity Tracking Mobile App for Weightlifting}
+
+\author{Neython Lec Streitz}
+\affiliation{Occidental College}
+\email{nlecstreitz@oxy.edu}
+
+\begin{document}
+
+\maketitle
+
+\section{Problem Context}
+From the average gym-goer to the elite professional athlete, the ability to track and monitor training is key for supporting safe and effective workouts. 
+Specifically for intermediate to advanced athletes, exercise efficiency and load management becomes crucial for maintaining long-term performance improvements.
+The purpose of this mobile app is to provide an accurate, useful, and accessible method of tracking the path and velocity of a barbell during resistance training exercise.
+Through the use of this app, athletes and coaches can objectively track their range of motion and the intensity of their workouts. \par
+
+Put simply, bar path refers to the range of motion of the barbell during an exercise. 
+Bar path tracking thus, tracks the time and distance of the barbell during a specific lift. 
+By optimizing the bar path for a given exercise, an athlete is able to pinpoint weak points in their movement and generate better efficiency overall. 
+Especially for beginners, bar path is an incredibly helpful tool for improving and visualizing exercise form. \par
+
+For the more advanced, velocity tracking provides even more granularity.
+Typically, exercise loads are prescribed using percentage-based methods.
+For example, a coach might make their athlete perform 5 sets of 5 repetitions using 70\% of their 1-rep max.
+Percentage-based training has a long history of being an effective approach for resistance training design.
+Recently, Velocity Based Training (VBT) has emerged as a contemporary method of resistance training design, using the velocity of the barbell during an exercise to supplement and inform training decisions. \par
+
+VBT is useful because it allows for more athlete-specific load (weight amount) and volume (repetition amount) prescriptions \cite{Weakley2021}.
+For one, it can gauge an athlete's current fatigue levels by comparing velocity in previous sessions.
+This practice is known as autoregulation, where an athlete can pull back on high fatigue days and push harder on days they are feeling fresh.
+Secondly, VBT allows coaches (or self-lead gym-goers) to assign training loads that deliver more precise and objective levels of effort and fatigue.
+Some athletes have difficulty doing higher repetition work, whereas others see sharp drop-offs near their one repetition max. 
+In the percentage-based approach, set and repetition recommendations do not account for this variability \cite{Balsalobre-Fernández2021}.
+With all that in mind, bar path and velocity metrics serve as a way to standardize technique for a beginner, and for the advanced, give biofeedback in real-time and enable the design of athlete-specific programs. \par
+
+Currently, there exists various hardware and software-based approaches to tracking bar path and velocity.
+This includes hardware devices like linear position transducers and 3D motion analysis systems, as well as video-based smartphone apps. 
+However, using hardware to track velocity is expensive and inaccessible for the majority of regular gym-goers and even for advanced athletes. 
+Furthermore, most smartphone apps show poor accuracy and clunky design \cite{Martinez-Cava2020, Kasovic2021}.
+Thus, our app is in a position to improve on the accuracy and design of existing smartphone apps, while circumventing the money and infrastructure needed for hardware-based approaches. \par
+
+\section{Technical Background}
+At its most basic, the question at hand is how we can track, and ultimately display, the position and rate of change of a dynamic object in real time.
+Thus, this project is one in the realm of computer vision (CV), or, how computers interpret the visual world. 
+At a glance, the technical components of this project includes object detection and object motion tracking.\par
+
+\subsection{Object Detection}
+To begin, there needs to be a way to detect the barbell within the frame of the video.
+The main goal of object detection within CV tasks is to identify and draw boundaries around objects in a given image or video.
+State-of-the-art approaches utilize deep-learning methods and neural networks to perform object detection. 
+To this end, there are typically two main parts to object detection with deep-learning.
+Firstly, the image or frame passes through an encoder that extracts statistical features used to locate and label objects.
+Then, the encoder's outputs are passed through a decoder that predicts the boundaries and labels of each of the objects. \par
+
+An existing network architecture is usually the encoder used for object detection.
+Two of the most common network architectures are VGG and ResNet \cite{Simonyan2015,He2016}.
+However, these networks are simply too large for resource constrained devices like smartphones.
+Developed by Google, MobileNet is an encoder specifically made to work on mobile devices \cite{Howard2017}.
+It functions by employing depthwise separable convolution, a process that decreases the amount of parameters in the network, making it less resource intensive. \par
+
+Common decoders used for object detection applications include Faster R-CNNs and You Only Look Once (YOLO) \cite{Ren2015,Redmon2015}.
+While Faster R-CNNs delivers great accuracy, it suffers in overwhelming complexity and slow speed.
+YOLO has the opposite problem, as it provides speed but lacks in accuracy.
+Google's Single Shot Detectors (SSD) aims to provide a middle ground \cite{Liu2015}.
+SSD works by laying a grid of anchor points over the input image then overlaying boxes of multiple shapes and sizes at each anchor point.
+The model then predicts the likelihood that the object to be detected exists within the box, changing the boxes to fit the object as best as possible.
+The lower likelihood boxes are pruned away, leaving a best prediction of the boundaries of the object. \par
+
+By combining MobileNet and SSD, smartphones are capable of supporting deep learning-based object detection.
+Having said that, the MobileNet and SSD combination supports the detection of 20 different objects, none of which are barbells.
+Given that the process of training a network to specifically detect barbells is likely very GPU intensive, slow, and unreliable, my project takes advantage of the relative ease of tracking a pre-specified color and shape.
+By using a sticker, post-it note, or simply painting the end of a barbell, we can set the color of the barbell apart from the rest of the video frame. 
+Combined with the fact that barbells are standardized sizes, the combination of color and shape to object detect, essentially turns the barbell into a contour. \par
+
+A contour is a well-defined boundary with matching color or intensity within.
+To allow for contour detection, the image or video frame is first converted to grayscale.
+Next, binary thresholding is applied, converting the image to black and white by setting only the borders of the object white and the rest black.
+A contour algorithm is finally applied to identify the borders, and if needed, draw them out over the original image.
+The algorithm simply detects sharp changes in intensity of color throughout the image and marks it as a border. 
+Contour detection is a much simpler process, allowing me to maintain accessibility and ease-of-use, without the need to train a neural network. \par
+
+\subsection{Object Tracking}
+In essence, the velocity of a barbell is simply its directional movement over time.
+To get the barbell velocity, it is necessary to track it throughout the frames of a video.
+In the case of a barbell, we will be engaging in Single Object Tracking (SOT). \par
+
+Typical problems in object tracking include occlusion, detection speed, and spatial scale variation.
+Occlusion is simply when objects are so close to each other that they appear to be one merged object.
+Luckily, supporting occlusion is not something we need to deal with, as the barbell will almost always be in an open and unimpeded space.
+Similarly, because we are tracking the barbell side-on, almost as if it was two-dimensional, there is little variation in object scale.
+Detection speed is certainly an issue, but because this is a contour detection problem, there already exists fast and efficient techniques. \par
+
+There are a variety of neural network approaches to object tracking, including BOOSTING Tracker, MIL Tracker, and KCF Tracker \cite{Grabner2006, Babenko2009, Henriques2015}.
+These approaches each have their benefits and downsides, typically balancing general accuracy, occlusion support, lighting and viewpoint change, and error detection. \par
+
+For the purposes of this project, tracking will involve repetitively updating the camera and calculating the previous pixel position with the current.
+Knowing the size of the end of the barbell, the amount of pixels occupied by the barbell in the frame can be used to track the movement of the barbell throughout the video.
+A list-like data structure such as the \emph{deque}, provides quick enough pops and appends to maintain and retrieve the previous positions of the barbell.
+Due to the frame rate of modern smartphones, this process should be quick enough to accurately track the position and velocity of the barbell. \par
+
+\section{Prior Work}
+As mentioned before, there currently exists a variety of hardware and software-based methods of tracking barbell path and velocity. 
+While the market is fairly large, there are only a handful of devices, systems, and apps that have been studied in sports science literature.
+The studies that have been done, mainly evaluate the reliability, ease-of-use, and practicality of these technologies. \par
+
+As far as hardware-based approaches are concerned, linear position transducers, also known as linear encoders, are considered the gold standard for velocity tracking.
+These devices clip onto the barbell and have a cable moving in and out of the device.
+Examples of linear encoders available on the market include Vitruve, T-Force, and GymAware. 
+These companies also include or offer paid mobile apps for synchronization with their devices.
+All three of the listed devices have been validated by studies in sports science literature \cite{Martinez-Cava2020, Wadhi2018, PerezCastilla2019}.
+However, great accuracy comes at a price, as linear encoders are expensive and inaccessible.
+The lone GymAware device comes in at over \$1,995, with accompanying software starting at an additional \$495 minimum.
+Vitruve is a cheaper option, yet still comes in at around \$397 for the device and mobile app. 
+One more thing to note is the potential for damaging the devices because they must remain directly under the barbell.
+This is especially problematic for intensely dynamic movements like the Olympic lifts.\par
+
+As far as hardware-based approaches to path tracking, there are no current devices on the market with the express purpose of visualizing barbell paths.
+That's not to say that three-dimensional motion capture camera systems can't and haven't been used to track bar path and velocity \cite{PerezCastilla2019}.
+Yet, like linear encoders, camera systems are costly and involve infrastructure not accessible nor feasible to set up for the average gym-goer.
+Nonetheless, the reliability of these devices means they are often used to test the validity of novel velocity trackers, like mobile apps \cite{PerezCastilla2019}. \par
+
+For software-based approaches, specifically, mobile applications, there are multiple offerings on the market.
+Examples of apps that include both bar path and velocity tracking include MyLift, IronPath, and BarSense.
+Of those, MyLift and IronPath have been studied in the literature.
+Markedly, studies have concluded that both MyLift and IronPath are not reliable tools for the measurement of barbell velocity.
+Kasovic et al. showed that the IronPath app compared with a linear transducer, "recorded significantly lower average concentric velocity values for the front squat and back squat and greater ROM values for the sumo deadlift" \cite{Kasovic2021}.
+Similarly, Martinez-Cava et al. concluded that "the excessive errors of the newly updated MyLift app advise against use of this tool for velocity-based resistance training" \cite{Martinez-Cava2020}.
+With that said, other apps as well as experimental software approaches have shown promising results. \par
+
+In a paper by Pueo et al., they developed a smartphone-based camera system for automatically detecting and tracking a barbell using a custom image-processing algorithm \cite{Pueo2021}.
+The algorithm works by creating reference points on the parallel supports of the exercise machine, in this case, a Smith Machine, to segment and compute the barbell position without prior calibration.
+Their system showed near matching performance with a linear position transducer.
+That being said, their paper also admitted that the video system is limited by the use of a barbell machine, and does not support free weight barbell movements.
+Moreover, their system does not include any path tracking and visualization features.
+Nonetheless, in terms of velocity tracking accuracy, their paper is certainly something to look up to.
+For the purposes of this project, the main takeaway from this study is the use of colored tape on the barbell to improve accuracy.\par
+
+Interestingly, two papers by Balsalobre-Fern\'andez et al. concluded that the MyLift (formerly Powerlift) app was in fact a valid and reliable method of tracking barbell velocity \cite{Balsalobre-Fernández2017, Balsalobre-Fernández2018}. 
+The two studies showed high correlation between MyLift and a linear position transducer.
+However, a study and subsequent response by Courel-Iba\~nez et al. contradicted these findings, showing poor reliability from the MyLift app \cite{Courel-Ibáñez2020}.
+They also noted that the main author of the two papers where MyLift was validated, is also the main developer of the app.
+Combined with the aforementioned study by Martinez-Cava et al., that also advised against its use, the MyLift app does not serve as an example of a validated smartphone-based velocity tracker \cite{Martinez-Cava2020}.
+
+
+Ultimately, while linear position transducers deliver incredible accuracy and precision, they are far too expensive to be accessible tools for regular gym-goers and most athletes to use in the gym.
+Not to mention that linear position transducers also lack in the visualization of barbell path and have the danger of being damaged by the barbell.
+Unfortunately, due to their consistency, very little work is being done to improve on their flaws. 
+Otherwise, several mobile apps already exist on the market that offer both barbell path and barbell velocity tracking for free.
+Yet, their inability to track velocity with accuracy and precision makes them unreliable for the practice of velocity based training methods.
+Pushing this field of technology forward means developing mobile apps with sufficient precision to implement VBT, while maintaining ease-of-use, quality design, and accessibility to a wide audience of gym enthusiasts and athletes.
+
+\printbibliography 
+
+\end{document}
