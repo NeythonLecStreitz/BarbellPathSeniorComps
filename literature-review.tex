@@ -178,6 +178,121 @@ Unfortunately, due to their consistency, very little work is being done to impro
 Otherwise, several mobile apps already exist on the market that offer both barbell path and barbell velocity tracking for free.
 Yet, their inability to track velocity with accuracy and precision makes them unreliable for the practice of velocity based training methods.
 Pushing this field of technology forward means developing mobile apps with sufficient precision to implement VBT, while maintaining ease-of-use, quality design, and accessibility to a wide audience of gym enthusiasts and athletes.
+\section{Methods}
+As a problem of computer vision, the majority of the technical aspects of the project have to do with identifying and then tracking the barbell.
+We have chosen to use barcode-esque barbell tags which are easily printable and placed on a wide variety of barbells. 
+This is cheap, removes the need to color and/or permanently mark a barbell (that might be for public use), and has been used for other CV applications with great success. 
+Velocity and bar path tracking is involves the constant identification and optical flow estimation of the bar over time.
+Lastly, our app is designed for use by an iPhone, and as such, we use Swift to implement the app.
+
+\subsection{Barbell Identification}
+Based on a previous project by the April Robotics Laboratory out of the University of Michigan, our barbell identification relies on QR code (fiducial marker) identification \cite{Wang2016}. 
+Why QR codes? 
+As low cost is a primary goal of the project, by using QR codes we remove the need for training novel machine-learning-based barbell identification models while still maintaining increased accuracy. 
+QR codes are easy to generate, cheap and printable, and more efficient to stick/remove from barbells than permanent options (i.e, coloring the barbell). 
+We also considered using brightly colored stickers as our contour, but the use of QR codes nearly guarantees that the correct contour is identified within the frame because of their inner codification.
+Thus, they are a great candidate for barbell identification. \par
+
+With the QR codes in mind, the first step is identifying the barbell. 
+We start by printing a QR code based on work by Krogius et al., where they propose a flexible model for generating fiducial markers: 
+"We can generate layouts with a higher data density and smaller border, circular tags, or a custom tag layout with empty space in the middle in which a smaller tag could be placed, allowing this sort of recursive tag to be detected over a large range of distances" \cite{Krogius2019}.
+This means we can generate QR codes that fit nicely onto the circular end of a barbell, which typically follow standard dimensions, or at the very least offer easily accessible dimensions in their manuals.
+For a user, the app will generate and email them a QR code image for them to print.
+Currently, a user can select a QR code to fit the shaft dimensions of a 2.8cm standard men's Olympic barbell or a 2.5cm standard women's Olympic barbell.\par
+
+After starting the video recording, the QR code detection follows with two main steps.
+Firstly, the image is processed via adaptive thresholding, segmenting the current frame by pixel intensity.
+Contours are extracted from this thresholded image, with special attention paid to only those contours that match the general outline of our marker.
+This processing essentially encompasses marker candidate detection.
+Secondly, to determine whether or not the candidates are truly markers, their inner codification is verified.
+The bits of each marker are extracted, counted (white and black bits), and then checked against a dictionary to determine validity.
+Fortunately, the barbell is recorded directly parallel, meaning no extra work needs to be done to determine orientation. \par
+
+\subsection{Bar Velocity and Path Tracking}
+By repeatedly identifying and locating the QR code frame-by-frame, we can track the barbell over time, giving us a path and velocity output. 
+The algorithm begins by initializing, waiting for a QR code to appear in the scene.
+Since the camera will already be set up to view the barbell and QR code, this process will happen rather quickly.
+We take that first frame as our original reference.
+Next, we perform QR code detection as outlined in the above subsection, saving the QR code bounding rect.
+Continuing, we perform feature matching, that is, we identify the differences in the original frame to next frames, and estimate the optical flow between the frames.
+Optical flow is used once again to estimate the bounding rect position of the QR code in the next frame.
+Lastly, we repeat this process continually until the user ends the video. \par
+
+The contrail of the barbell (the bar path) is relatively straightforward to implement.
+During the bar localization process, we save the past and current points and as long as they are not null, we compute the thickness and draw a line connecting the points.
+Velocity tracking similarly takes the past and current location points to determine distance over time.
+Bar position and velocity metrics are saved continually to be outputted intra-set and for viewing after a set.
+The display and audio output of the velocity and bar path is handled by the app. \par
+
+\section{Evaluation Metrics}
+The stated goals of the project are to deliver a cheap, accessible, and accurate velocity and path tracking app for barbell-based exercise.
+On the whole, QR codes are quite inexpensive to print and only require some form of adhesive to place on a barbell.
+Thus, the resources necessary to use the app are far less expensive and far more accessible than a linear position transducer.
+However, our app is slightly more expensive and slightly less accessible than other apps on the market, given that a QR must be printed, whereas other apps require nothing but a phone.
+Nonetheless, this added cost comes with a much needed increase in accuracy compared to the other apps on the market.
+We delineate the exact accuracy evaluation metrics in the velocity accuracy subsection.
+Additionally, we evaluated the ease-of-use and utility of the app via one round of user testing.
+The specifics are discussed in the app utility subsection.
+\par
+
+\subsection{Participant Selection}
+Fifteen users were chosen to participate in a joint evaluation on app utility and app accuracy.
+Users were made aware of the training design and procedure.
+No injuries or limitations were reported by any of the participants.
+All participants were familiar with the exercises used in the study.
+Lastly, users signed a written informed consent form. \par
+
+\subsection{Study Design}
+Participants utilized the app for two different exercises: barbell back squat and barbell bench press.
+For each of the two exercises, participants performed a progressive loading test consisting of increased loads of 15 lbs starting and ending in a range of between 45 lbs and 135 lbs. 
+After each set, participants took 5 minutes of rest to recover and analyze their bar path and velocity metrics outputted from the app.
+The magnitude of errors and levels of agreement between the app and a gold standard LPT were calculated for each set for each user. \par
+
+\subsection{Study Methodology}
+After a familiarization session with the exercises and barbell, participants were allowed time to browse through the app.
+Participants were asked previously to give their one-repetition maximum to ensure all participants could complete the study with each given weight.
+Next, participants were asked to perform three repetitions at maximum velocity for each weighted increase with 5 minutes of rest in between.
+Participants were allowed to set up the phone as they like following guidance from the app.
+In between sets, participants were allowed to pick up the phone, read and understand the app's output and then place it down once more to continue.
+During this time, the team recorded the output from the LPT and after the participant was done, from the app as well.
+Before and after completing the study, participants were surveyed on the following questions. \par
+Pre-study:
+\begin{enumerate}
+  \item What features would you expect from a velocity-based training app?
+  \item What issues do you have with your current training?
+  \item Have you used a different velocity/bar path tracking app in the past?
+\end{enumerate}
+Post-study:
+\begin{enumerate}
+  \item If you've used a similar app before, how would you compare your experiences?
+  \item What parts of the app did you find useful?
+  \item What parts of the app did you NOT find useful?
+  \item What parts of the app did you find difficult to use?
+  \item Would you use the app in the future? Why or why not?
+  \item Are there any additional comments?
+\end{enumerate}
+Surveys were collected from all 15 participants.
+Responses were kept anonymous.
+
+\subsection{Velocity Accuracy}
+To evaluate the accuracy of our app, we followed standard convention and employed the use of a linear position transducer.
+As stated by Janicijevic et al., LPT's, specifically GymAware and T-Force have been validated multiple times in the literature "as gold-standards in studies designed to validate other velocity monitoring devices" \cite{Janicijevic2021}.
+As such, we compared our app to a gold-standard device. \par
+
+Reliability analysis was completed by calculating the levels of agreement and magnitude of error between the LPT and app for each participant.
+To ensure reliability was covered for a variety of velocity ranges, we compared results for three velocity segments.
+These segments are in-line with work by Martinez-Cava et al.\cite{Martinez-Cava2020}: "heavy loads $\geq$ 80\% 1RM, MPV $\leq$ 0.50 m/s in BP and 0.70 m/s in SQ), medium loads (50\% $<$ 1RM $<$ 80\%, MPV between 0.50 and 1.00 m/s in BP and between 0.70 and 1.15 m/s in SQ) and light loads ($\leq$ 50\% 1RM, MPV $\geq$ 1.00 m/s in BP and $\geq$ 1.15 m/s in SQ)."
+Correlation was calculated using the Pearson's correlation coefficient and  the intraclass correlation coefficient (ICC).
+Furthermore, the smallest detectable change (SDC) was calculated using the standard error of measurement (SCD = $\sqrt{2}$×SEM×1.96).
+We employed Bland-Altman plots to visualize the agreement along each varying load and velocity segment.
+Based on previous recommendations, acceptable reliability was set at $ICC > 0.990 and SDC < 0.07 m/s$. \cite{Martinez-Cava2020}. 
+
+\subsection{App Utility}
+App utility was analyzed using survey results after study completion.
+Survey's were kept anonymous and after reading responses, key themes and reoccurring mentions were noted from the responses.
+
+
+\section{Ethical Considerations}
 
 \printbibliography 
 
