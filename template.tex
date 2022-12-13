@@ -42,7 +42,7 @@
 From the average gym-goer to the elite professional athlete, the ability to track and monitor training is key for supporting safe and effective workouts. 
 Specifically for intermediate to advanced athletes, exercise efficiency and load management becomes crucial for maintaining long-term performance improvements.
 The purpose of this project is to provide an accurate, useful, and accessible method of tracking the path and velocity of a barbell during resistance training exercise via video-recorded exercises.
-Through the use of this application, athletes and coaches will be able to objectively track the range of motion and intensity of barbell-based exercises they perform. \par
+Through the use of this application, athletes and coaches are able to objectively track the range of motion and intensity of any barbell squat exercises they perform. \par
 
 Put simply, bar path refers to the range of motion of the barbell during an exercise. 
 Bar path tracking thus, tracks the time and distance of the barbell during a specific lift. 
@@ -59,7 +59,7 @@ VBT is useful because it allows for more athlete-specific load (weight amount) a
 For one, it can gauge an athlete's current fatigue levels by comparing velocity in previous sessions.
 This practice is known as autoregulation, where an athlete can pull back on high fatigue days and push harder on days they are feeling fresh.
 Secondly, VBT allows coaches (or self-lead gym-goers) to assign training loads that deliver more precise and objective levels of effort and fatigue.
-Some athletes have difficulty doing higher repetition work, whereas others see sharp drop-offs near their one repetition max. 
+Some athletes have difficulty doing higher repetition work, whereas others see sharp drop-offs near their 1RM. 
 In the percentage-based approach, set and repetition recommendations do not account for this variability \cite{Balsalobre-Fernández2021}.
 With all that in mind, bar path and velocity metrics serve as a way to standardize technique for a beginner, and for the advanced, give biofeedback in real-time and enable the design of athlete-specific programs. \par
 
@@ -98,47 +98,48 @@ The lower likelihood boxes are pruned away, leaving a best prediction of the bou
 
 By combining MobileNet and SSD, smartphones are capable of supporting deep learning-based object detection.
 Having said that, the MobileNet and SSD combination supports the detection of 20 different objects, none of which are barbells.
-Given that the process of training a network to specifically detect barbells is likely very GPU intensive, slow, and unreliable, my project takes advantage of the relative ease of tracking a pre-specified color and shape.
-Specifically, I will take advantage of pre-existing fiducial marker detection techniques. 
-Fiducial markers, or in other words, QR codes, are incredibly great for estimating camera pose.
-The corners of a QR code provide the necessary correspondences to estimate the position and orientation of the barbell.
-Furthermore, because of their inner codification, the QR codes add extra reliability in detection.
-Combined with the fact that barbells are standardized sizes, adding fiducial markers to object detect, essentially turns the barbell into a contour. \par
+Given that the process of training a network to specifically detect barbells is likely very GPU intensive, slow, and unreliable, this project takes advantage of the relative ease of tracking pre-specified markers.
+Specifically, we take advantage of fiducial marker detection techniques.
+These markers are synthetic square markers composed of a black border with an inner binary codification.
+AruCo tags, a form of fiducial marker, are incredibly great for estimating camera pose.
+The AruCo library was first developed by Rafael Muñoz-Salinas and Sergio Garrido-Jurado \cite{Garrido2014}.
+The square shape of AruCo tags provide the necessary correspondences to estimate the position and orientation of the barbell.
+Furthermore, because of their inner codification, AruCo tags add extra reliability in detection.
+Adding fiducial markers to the end of barbells, essentially turns the problem of barbell detection into one of contour detection. \par
 
 A contour is a well-defined boundary with typically matching color or intensity within.
 In the case of fiducial markers, there is a bit pattern within the outline.
 To allow for contour detection, the image or video frame is first converted to grayscale.
 Next, binary thresholding is applied, converting the image to black and white by setting only the borders of the object white and the rest black.
 A contour algorithm is finally applied to identify the borders, and if needed, draw them out over the original image.
-The algorithm simply detects potential shapes that match the outline of our contours.
+The algorithm simply detects potential shapes that match the outline of the contours.
 Once detected, the contours are analyzed by extracting the marker bits within the marker.
 A perspective transform is applied to isolate the marker.
 The image is further divided into separate cells and bits within each cell are counted.
 The bit counts are matched against a dictionary to determine validity as a marker.
-Contour detection is thus a much simpler process, allowing me to maintain accessibility and ease-of-use, without the need to train a novel neural network. \par
+Contour detection is thus a much simpler process, allowing for ease-of-use while preserving accessibility due to not needing to train a novel neural network. \par
 
 \subsection{Object Tracking}
 In essence, the velocity of a barbell is simply its directional movement over time.
 To get the barbell velocity, it is necessary to track it throughout the frames of a video.
 In the case of a barbell, we will be engaging in Single Object Tracking (SOT). \par
 
-
 Typical problems in object tracking include occlusion, detection speed, and spatial scale variation.
 Occlusion is simply when objects are so close to each other that they appear to be one merged object.
-Luckily, supporting occlusion is not something we need to deal with, as the barbell will almost always be in an open and unimpeded space.
-Similarly, because we are tracking the barbell side-on, almost as if it was two-dimensional, there is little variation in object scale.
+Luckily, supporting occlusion is not something necessary to deal with, as the barbell will almost always be in an open and unimpeded space.
+Similarly, because the barbell is tracked from a side-on view, almost as if it was two-dimensional, there is little variation in object scale.
 Detection speed is certainly an issue, but because this is a contour detection problem, there already exists fast and efficient techniques. \par
 
 There are a variety of neural network approaches to object tracking, including BOOSTING Tracker, MIL Tracker, and KCF Tracker \cite{Grabner2006, Babenko2009, Henriques2015}.
 These approaches each have their benefits and downsides, typically balancing general accuracy, occlusion support, lighting and viewpoint change, and error detection. \par
 
 For the purposes of this project, tracking will involve repetitively updating the camera and calculating the previous pixel position with the current.
-Knowing the size of the end of the barbell, the amount of pixels occupied by the barbell in the frame can be used to track the movement of the barbell throughout the video.
+Knowing the perimeter measurement of the AruCo tag in real life, finding the calculated digital perimeter of the tag in each frame can be used to convert the pixel movement per frame of the barbell to its real life m/s equivalent.
 A list-like data structure such as the \emph{deque}, provides quick enough pops and appends to maintain and retrieve the previous positions of the barbell.
-Due to the frame rate of modern smartphones, this process should be quick enough to accurately track the position and velocity of the barbell. \par
+Due to the frame rate of modern smartphones, this process should be quick enough to somewhat accurately track the position and velocity of the barbell. \par
 
 \section{Prior Work}
-As mentioned before, there currently exists a variety of hardware and software-based methods of tracking barbell path and velocity. 
+As mentioned before, there currently exists a variety of hardware and software-based methods for tracking barbell path and velocity. 
 While the market is fairly large, there are only a handful of devices, systems, and apps that have been studied in sports science literature.
 The studies that have been done, mainly evaluate the reliability, ease-of-use, and practicality of these technologies. \par
 
@@ -149,6 +150,8 @@ They are black and white square tags with an encoded binary pattern.
 The improved algorithm takes advantage of the rarity of occluded tag detection, allowing the algorithm to function quicker. 
 Furthermore, Wang et al., showed detection improvements at a wide variety of distances away from the tags. 
 The AprilTag system is based on even earlier work including ARTag and ARToolkit \cite{Kato1999,Fiala2005}. 
+However, AprilTags are less straightforward to set up than the chosen AruCo tags, due to having no implementation with the OpenCV python library.
+Furthermore, more parameters in the AprilTags means higher false detection rates.
 Ultimately, these fiducial tag systems and detection algorithms are efficient, applicable in a wide variety of CV problems, and maintain high accuracy and resilience against false positives. \par
 
 As far as hardware-based approaches are concerned, linear position transducers, also known as linear encoders, are considered the gold standard for barbell velocity tracking.
@@ -180,8 +183,7 @@ The algorithm works by creating reference points on the parallel supports of the
 Their system showed near matching performance with a linear position transducer.
 That being said, their paper also admitted that the video system is limited by the use of a barbell machine, and does not support free weight barbell movements.
 Moreover, their system does not include any path tracking and visualization features.
-Nonetheless, in terms of velocity tracking accuracy, their paper is certainly something to look up to.
-For the purposes of this project, the main takeaway from this study is the use of colored tape on the barbell to improve accuracy.\par
+Nonetheless, in terms of velocity tracking accuracy, their paper is certainly something to look up to. \par
 
 Interestingly, two papers by Balsalobre-Fern\'andez et al. concluded that the MyLift (formerly Powerlift) app was in fact a valid and reliable method of tracking barbell velocity \cite{Balsalobre-Fernández2017, Balsalobre-Fernández2018}. 
 The two studies showed high correlation between MyLift and a linear position transducer.
@@ -191,17 +193,209 @@ Combined with the aforementioned study by Martinez-Cava et al., that also advise
 
 
 Ultimately, while linear position transducers deliver incredible accuracy and precision, they are far too expensive to be accessible tools for regular gym-goers and most athletes to use in the gym.
-Not to mention that linear position transducers also lack in the visualization of barbell path and have the danger of being damaged by the barbell.
+Not to mention, linear position transducers also lack in the visualization of barbell path and have the danger of being damaged by the barbell.
 Unfortunately, due to their consistency, very little work is being done to improve on their flaws. 
 Otherwise, several mobile apps already exist on the market that offer both barbell path and barbell velocity tracking for free.
 Yet, their inability to track velocity with accuracy and precision makes them unreliable for the practice of velocity based training methods.
 Pushing this field of technology forward means developing apps with sufficient precision to implement VBT, while maintaining ease-of-use, quality design, and accessibility to a wide audience of gym enthusiasts and athletes.
 
+\section{Methods}
+As a problem of computer vision, the majority of the technical aspects of the project have to do with identifying and then tracking the barbell.
+Additionally, automating the detection of repetitions was prioritized in the structure of the code.
+As mentioned before, we have chosen to use AruCo tags which are easily printable and placed on a wide variety of barbells. 
+This is cheap, removes the need to color and/or permanently mark a barbell (that might be for public use), and has been used for other CV applications with great success. 
+Velocity and bar path tracking involves the constant identification and/or optical flow estimation of the bar over time.
+Each technical aspect, barbell identification, bar path tracking, and automatic rep detection is detailed below.
+
+\subsection{Barbell Identification}
+Inspired in part by a project out of the University of Michigan's April Robotics Lab, our barbell identification relies on fiducial marker identification \cite{Wang2016}. 
+Why AruCo tags specifically? 
+As low cost is a primary goal of the project, by using AruCo tags we can remove the need for training novel machine-learning-based barbell identification models while still maintaining increased accuracy. 
+AruCo tags are easy to generate, cheap and printable, and more efficient to stick/remove from barbells than permanent options (i.e, coloring the barbell).
+Three other contour techniques were considered but ultimately discarded: colored contours, QR codes, and AprilTags.
+While brightly colored stickers are incredibly motion blur resistant and quite easy to detect, AruCo tags provide stronger error detection within a busy and often colorful gym setting.
+Additionally, QR tags were considered but were found to be more difficult to detect than AruCo tags and more susceptible to motion blur.
+Lastly, the original inspiration for the method, AprilTags, were considered but ultimately not followed due to being much more difficult to set up than AruCo tags.
+Thus, AruCo tags were chosen as the best candidate for barbell identification. \par
+
+With the AruCo tags in mind, the first step is identifying the barbell. 
+To successfully tape the AruCo tag to the barbell, a small piece of cardboard is used.
+It is important to ensure that the AruCo tag has sufficient white space to contrast its wide black border.
+A more advanced version also includes a small section of a paper towel roll taped to the back of the cardboard to allow the tag to be taken on and off of the barbell at will.
+For a user, the project has a feature for generating tags to print.
+To note is that users will still have to construct the cardboard holder themselves.
+The AruCo tag will then be taped centrally onto the end of the barbell facing the camera.\par
+
+After starting the video recording, the AruCo tag detection follows with two main steps.
+Firstly, the image is processed via grey-scaling and adaptive thresholding, segmenting the current frame by pixel intensity.
+Contours are then extracted from the thresholded image, with special attention paid to only those contours that match the general outline of the marker.
+This processing essentially encompasses marker candidate detection.
+Secondly, to determine whether or not the candidates are truly markers, their inner codification is verified.
+The bits of each marker are extracted, counted (white and black bits), and then checked against a dictionary to determine validity.
+Fortunately, the barbell is recorded directly parallel, meaning no extra work needs to be done to determine orientation or solve for occlusion. \par
+
+While the default settings of the AruCo detection algorithm was used, testing was done to determine the best fit from a AruCo dictionary perspective.
+Originally, the 4x4, 50 marker library was used to generate and detect tags.
+There are multiple grid sizes as well as total marker dictionaries to choose from.
+Choosing less total markers allows for greater differences marker-to-marker, however since only one marker exists within the frame, choosing 50 total markers versus 250 total markers makes a trivial difference.
+The 4x4, 50 marker dictionary, means any AruCo tag generated contains a 4x4 inner codification and comes from a selection of 50 possible tags.
+Through testing, this dictionary did not meet the error detection necessary for our application.
+Other square objects within frames were detected as tags causing the algorithm to calculate skewed coordinate positions and as a result, skewed velocity outputs.
+On the opposite end, the 8x8, 50 marker dictionary was too susceptible to motion blur due to its heavy granularity relative to other markers. 
+This was expected considering the previous difficulty with QR tags.
+As for the final dictionary, we found the 6x6, 50 marker library to provide the best balance of ease-of-detection and error robustness. \par
+
+\subsection{Bar Velocity and Path Tracking}
+By repeatedly identifying and locating the AruCo tag frame-by-frame, we are able to track the barbell over time, giving us the necessary path and velocity output. 
+The algorithm begins by initializing, waiting for a tag to appear in the frame.
+Since the camera should already be set up to view the barbell end, this process will happen rather quickly.
+Next, we perform AruCo tag detection as outlined in the above subsection, saving the detected bounding corners.
+Even with a simple tag, motion blur can still be an issue during very fast movement.
+Thus, optical flow estimation is used to fill-in any gaps in detection.
+Optical flow estimation works by performing feature matching and determining where the previously detected marker corners have moved in the next frame.
+That is, it identifies the differences in the original frame to next frames, and estimates the pixel movement between the frames.
+Given that the real perimeter of the tag is known and each frame is 1/fps seconds in length, the pixel distance frame to frame along with the pixel perimeter of the AruCo tag is enough to calculate mm/s every 1/fps.
+From there, we calculate the average concentric velocity, peak velocity, displacement, and velocity loss. 
+This process is repeated continually until the user ends the video. \par
+
+The contrail of the barbell (the bar path) is relatively straightforward to implement.
+During the bar localization process, we save the past and current points to compute the displacement and draw lines connecting the points.
+Velocity tracking similarly takes the past and current location points to determine distance over frames. \par
+
+\subsection{Automatic Rep Detection}
+One of the biggest issues with existing barbell velocity and bar path tracking applications is the need for heavy manual interaction.
+This includes but is not limited to identifying the barbell at different points in the video, tracing the bar path manually, and/or specifying the amount of reps performed.
+To combat this, an automatic repetition counter was implemented using the coordinate data computed by the previous methods.
+Two specific features are necessary to apply the automation.
+Firstly, its important to note that most lifters will set up their video before engaging in the set.
+This means that they will likely need to unrack the barbell before performing the exercise.
+Movements such as racking or unracking have the potential to confuse the rep detection algorithm.
+Clearly, greater horizontal movement than vertical movement indicates racking/unracking of the barbell.
+Thus, the positional history and velocity history is erased if this horizontal bias is detected. \par
+
+Next, rep detection was implemented by splitting the two phases of a lift and detecting them within the positional data.
+The eccentric portion, as the lifter lowers the barbell is indicated by an inflection downwards.
+The concentric portion, as the lifter raises the barbell is indicated by an inflection upwards.
+Detection of inflection points at the top of the rep and at the bottom signify the completion of a single repetition, and aggregate statistics are calculated after each inflection pair is noticed.
+Unfortunately, this setup means other types of lifts are not currently possible with the app.
+This happens for two main reasons.
+Firstly, exercises like the bench press for instance, do not have the same magnitude of movement that back squats do so the algorithm is poor in detecting unracking/racking.
+Secondly, exercises like the deadlift move in the opposite direction of a squat, starting with the concentric and ending with the eccentric.
+Nonetheless, for the barbell back squat, automatic rep detection works for all reasonable sets of the exercise.
+
+\section{Evaluation Metrics}
+For the purposes of this project, only velocity accuracy was tested via a small study. 
+To determine the accuracy of velocity tracking, a study was conducted on a small sample of participants comparing the app's output with an existing hardware device on the market.
+Due to this focus, no app-focused user testing was performed.
+Instead, participants in the accuracy study were asked to share thoughts on possible features after completion of their sets.
+Below, we delineate participant selection, study design, and study methodology.
+Results from the study and feedback from participants is discussed in the following Results section. 
+The full dataset of velocity comparisons is available to view within this paper's repository.\par
+
+\subsection{Participant Selection}
+We selected five users to participate in the evaluation of velocity tracking accuracy.
+Users were made aware of the training design and procedure.
+Users were also informed of the basic advantages of using velocity-based training methods.
+No participant reported any injuries or limitations prior to beginning the study.
+In total, three participants identified as men and two as women.
+Of the three men, all considered themselves intermediate-advanced lifters with 3+ years training.
+Of the two women, both considered themselves to be novice lifters with scattered/inconsistent training histories.
+Lastly, all participants were familiarized with the barbell back squat exercise used in the study. \par
+
+\subsection{Study Design}
+Participants utilized the app for just the barbell back squat.
+Prior to starting, participants were educated on the benefits of velocity-based training as well as some common limitations to the practice.
+After finishing the introduction, participants began with the active portion.
+For the exercise, participants performed a progressive loading test consisting of increased loads of 20\%, 40\%, 60\%, and 80\% of their estimated 1RM.
+The reason for the gradual increase in barbell weight was to ensure reliability is covered for a variety of velocity ranges.
+Similar, but more precise, work was done by Martinez-Cava et al. \cite{Martinez-Cava2020}. \par
+
+After each set, participants took 5 minutes of rest to recover and analyze their bar path and velocity metrics outputted from the app.
+Results in average concentric velocity and peak velocity were saved to be analyzed.
+Building off work by Tomasevicz et al., we calculated simple Pearson correlations between our app and the Push Band 2.0, now owned by Whoop \cite{Tomasevicz2020}.  \par
+
+\subsection{Study Methodology}
+After a familiarization session with the exercises and barbell, participants were shown the app with a sample pre-recorded video.
+Through this showing, participants were informed of the benefits and limitations of velocity-based training and velocity tracking in general.
+Participants were asked previously to give their one-repetition maximum to ensure all participants could complete the study with each given weight. \par
+
+Next, participants were asked to perform five repetitions at maximum velocity for each weighted increase with 5 minutes of rest in between.
+An iPhone smartphone was used to record each set, and it was kept in the same location at the same angle to the side of the squat rack for all participants.
+This recording was done at 60 fps.
+In between sets, participants were allowed to view the set within the app on a separate laptop.
+This ensured that the smartphone was not moved to a different position in between sets or between participants.
+During this time, the velocity statistics were recorded from the Push Band 2.0 and after the participant was done, from the smartphone as well (after being uploaded to the app). \par
+
+\section{Results and Discussion}
+The stated goals of the project are to deliver a cheap, accessible, and accurate velocity and path tracking application for barbell-based exercise.
+On the whole, AruCo tags are quite inexpensive to print and only require some form of adhesive to place on a barbell.
+Thus, the resources necessary to use the velocity tracking are far less expensive and far more accessible than a linear position transducer.
+However, our project is slightly more expensive and slightly less accessible than smartphone apps on the market, given that a tag must be printed, whereas those apps require nothing but a phone.
+Nonetheless, this added cost should come with a much needed increase in accuracy compared to the smartphone apps on the market.
+Furthermore, it allows for a more automatic detection of the barbell and of squat repetitions.
+\subsection{Velocity Accuracy}
+To evaluate the accuracy of the app, we will follow standard convention and compare it to an already validated device, the Push Band 2.0.
+As stated by Janicijevic et al., LPT's, specifically GymAware and T-Force have been validated multiple times in the literature "as gold-standards in studies designed to validate other velocity monitoring devices"\cite{Janicijevic2021}.
+However, without access to LPT's, the Push Band was the next best option.
+It is important to note that studies have not completely validated the Push Band device.
+A study by Balsalobre-Fernández et al., showed that while the Push band was accurate enough to have practical applications in velocity based training, it was unsuitable for very light loads and at faster velocities \cite{Balsalobre-Fernández2017}.
+Thus, any accuracy results from our app cannot be extrapolated to any true results. 
+\par
+
+Reliability analysis was completed by calculating the Pearson correlation between the app and Push band for average concentric velocity and average peak velocity.
+With 5 participants each performing 20 total repetitions, there were a total of 100 data points to compare.
+However, due to issues with both the Push band and app incorrectly counting reps, the total data size dropped to 64 comparisons. \par
+
+We calculated a Pearson correlation of 0.6 out of 1 for average concentric velocity and a Pearson correlation of 0.42 out of 1 for peak concentric velocity.
+According to work by Martinez-Cava et al., the benchmark for acceptable reliability is as high as $>0.990$ \cite{Martinez-Cava2020}. 
+Clearly, this result is not accurate enough for our app to be of use for VBT practice.\par
+
+Interestingly, the first three participants showed a Pearson correlation of 0.94 out of 1 for average concentric velocity.
+These first three participants included the two novice lifters and one advanced lifter.
+It was only with the inclusion of the two intermediate-advanced lifters where the correlation dropped drastically.
+Certainly, the first three lifters could've just so happened to share similar velocity outputs between the app and Push band.
+After all, it is quite a small sample size.
+Theoretically though, this could be due to the fact that the intermediate-advanced lifters could achieve much faster velocities.
+It could be reasonably expected that these faster velocities caused not only some issues of reliability within our app but also within the Push Band device.
+Moreover, the two intermediate-advanced lifters were much more confident at each weighted increase, resulting in a more relaxed, less strict execution of their sets.
+This included things like pausing half-way down the eccentric portion, bouncing out of the bottom of the squat, and swaying back and forth before beginning their set.
+It was these intricacies that caused problems for both the app and the Push band.
+Nonetheless, studies measuring reliability of VBT devices typically employ multiple devices to test and to compare against, not to mention at least 15 participants per study across multiple days of evaluation. 
+For a truer accuracy evaluation we recommend employing the use of a LPT instead of a Push band, increasing the number of participants drastically, and enforcing controlled execution of the exercise. \par
+
+\subsection{Project Utility}
+As mentioned prior, app utility was lower on the priority list for this project.
+Even so, each participant in the accuracy study was also asked to reflect on their experience with the app. 
+One woman noted the possibility of auto-regulating her workouts, especially around fatigue caused by the menstrual cycle.
+This highlights the potential for increasing accessibility in strength training as VBT better aligns workouts with the dynamic nature of the human body.
+Another participant, a college strength and conditioning coach, liked the ability to view each repetition in isolation but would've liked power output features.
+Based on his feedback, bar path color labels were added to separate the eccentric and concentric phase of each repetition.
+Lastly, another participant who considered themselves an experienced lifter, disliked the strictness of the tracking.
+Performing "unnecessary" movements such as bouncing, pausing, and/or swaying, confused the algorithm and caused us to restart the evaluation.
+While this makes sense as an issue, it becomes difficult to incorporate this kind of robustness while maintaining automatic rep detection and barbell tracking.
+To address this, we added a manual way to begin and end velocity tracking so as to allow for looser unracking/racking.
+Other recommendations and insights will hopefully be applied in the future. \par
+
+To note is that these discussions miss multiple key determinants of project utility.
+A longitudinal study might reveal issues of adherence, day-to-day bugs, or potential future features.
+No testing was done in different gyms, with different phone set ups, or with lifter's who had previous experience with VBT.
+Not to mention, it is unclear how this app might fit in the regular workflow of a lifter who normally doesn't employ VBT practices.
+Unfortunately, a study over a larger period of time is out of scope for this project. \par
+
+\subsection{Project Conclusion}
+Unquestionably, we did not reach our mark in terms of pure velocity tracking accuracy. 
+Yet, as a proof of concept, the app delivered in terms of cost and potential utility.
+Many unexplored settings within the framework created by this app still remain to be explored, many of which could certainly improve the accuracy and usability of the app.
+For instance, changing AruCo tag parameters might improve tag detection speed and accuracy.
+Possibly, some combination of a colored contour with additional inner codification could improve motion blur resistance while still maintaining decent error correction.
+Considering other features, allowing for more manual rep counting could prevent erroneous movement from biasing the velocity statistics.
+And lastly, a more fleshed out user interface could certainly provide better usefulness for experienced practitioners and more unguided accessibility to beginners.
+All in all, while velocity accuracy did not meet the mark, there remains many paths to develop further, so in that sense the project proved the feasibility of a video-based barbell velocity and path tracker. \par
 \section{Ethical Considerations}
-For this project, there exists various ethical considerations to be weary of, especially with the resources currently available for this project. 
+As a concluding section, there exists various ethical considerations to be weary of, especially with the resources currently available for this project. 
 These issues are directly linked to the main goals of the project. 
 That is, providing barbell tracking accurately, increasing accessibility by lowering associated costs, and allowing tracking to occur over time. 
-Primary among these considerations are the potential of providing faulty tracking to users and privacy issues concerning maintaining user video data for future review. 
+Primary among these considerations are the potential of providing faulty tracking to users and privacy issues concerning maintaining user video and velocity data for future review. 
 Individually, these potential issues can be addressed, but as a whole, they might entail spending too much time on disparate features. 
 Moreso, the current development plan of the project involves building solely the velocity and path tracking model before implementing it into a user application.
 This means that ethical concerns with app design will not be a main concern in this beginning stage, which could cause problems in the future. 
@@ -252,172 +446,9 @@ As such, our application sits in a difficult spot between providing high-granula
 Less outwardly questionable is the issue of simply keeping the data private from external sources.
 To mitigate this potential problem, Schaar recommends employing, \textit{Privacy by Design} including minimizing data collection, data sovereignty, and right to information among a handful of other concerns \cite{Schaar2010}. 
 There does not seem to appear any potential features of the application that would deny these recommendations, but it will lead to longer development time.
-Questions we should be asking including: Does our application need a password feature? Should we store the entire video or just a reduced bar path representation? Should users be able to export and share their videos with others?
+Questions we should be asking include: Does our application need a password feature? Should we store the entire video or just a reduced bar path representation? Should users be able to export and share their videos with others?
 These questions are somewhat difficult to address considering the projected development of the application starts not with front-end design but by focusing on creating highly accurate bar path and velocity tracking features.
-Regardless, storing health data of app users will necessitate careful consideration in terms of data usage and data privacy.
-
-\section{Methods}
-As a problem of computer vision, the majority of the technical aspects of the project have to do with identifying and then tracking the barbell.
-As mentioned before, we have chosen to use QR code-like barbell tags which are easily printable and placed on a wide variety of barbells. 
-This is cheap, removes the need to color and/or permanently mark a barbell (that might be for public use), and has been used for other CV applications with great success. 
-Velocity and bar path tracking involves the constant identification and optical flow estimation of the bar over time.
-
-\subsection{Barbell Identification}
-Based on a previous project by the April Robotics Laboratory out of the University of Michigan, our barbell identification will rely on QR code (fiducial marker) identification \cite{Wang2016}. 
-Why QR codes? 
-As low cost is a primary goal of the project, by using QR codes we can remove the need for training novel machine-learning-based barbell identification models while still maintaining increased accuracy. 
-QR codes are easy to generate, cheap and printable, and more efficient to stick/remove from barbells than permanent options (i.e, coloring the barbell). 
-We also considered using brightly colored stickers as our contour, but the use of QR codes nearly guarantees that the correct contour is identified within the frame because of their inner codification.
-Thus, they are a great candidate for barbell identification. \par
-
-With the QR codes in mind, the first step is identifying the barbell. 
-We will start by printing a QR code based on work by Krogius et al., where they propose a flexible model for generating fiducial markers: 
-"We can generate layouts with a higher data density and smaller border, circular tags, or a custom tag layout with empty space in the middle in which a smaller tag could be placed, allowing this sort of recursive tag to be detected over a large range of distances" \cite{Krogius2019}.
-This means we can generate QR codes that fit nicely onto the circular end of a barbell, which typically follow standard dimensions, or at the very least offer easily accessible dimensions in their manuals.
-For a user, the project will generate and email them a QR code image for them to print.
-Currently, a user will be able to select a QR code to fit the shaft dimensions of a 2.8cm standard men's Olympic barbell or a 2.5cm standard women's Olympic barbell.
-The QR code will be taped centrally onto the end of the barbell facing the camera.\par
-
-After starting the video recording, the QR code detection follows with two main steps.
-Firstly, the image will be processed via adaptive thresholding, segmenting the current frame by pixel intensity.
-Contours will then be extracted from this thresholded image, with special attention paid to only those contours that match the general outline of our marker.
-This processing essentially encompasses marker candidate detection.
-Secondly, to determine whether or not the candidates are truly markers, their inner codification will be verified.
-The bits of each marker will be extracted, counted (white and black bits), and then checked against a dictionary to determine validity.
-Fortunately, the barbell will be recorded directly parallel, meaning no extra work needs to be done to determine orientation or solve for occlusion. \par
-
-\subsection{Bar Velocity and Path Tracking}
-By repeatedly identifying and locating the QR code frame-by-frame, we should be able to track the barbell over time, giving us a path and velocity output. 
-The algorithm will begin by initializing, waiting for a QR code to appear in the scene.
-Since the camera will already be set up to view the barbell and QR code, this process will happen rather quickly.
-We will take that first frame as our original reference.
-Next, we will perform QR code detection as outlined in the above subsection, saving the QR code bounding rect.
-Continuing, we will perform feature matching, that is, we will identify the differences in the original frame to next frames, and estimate the optical flow between the frames.
-Optical flow is used once again to estimate the bounding rect position of the QR code in the next frame.
-Given that the diameter of our barbell's end is 50mm and each frame is 1/fps seconds in length, the pixel distance frame to frame along with the amount of pixels occupied by the QR code (barbell's end) should be enough to calculate mm/s every 1/fps.
-Lastly, we will repeat this process continually until the user ends the video. \par
-
-The contrail of the barbell (the bar path) is relatively straightforward to implement.
-During the bar localization process, we will save the past and current points and as long as they are not null, we will compute the thickness and draw a line connecting the points.
-Velocity tracking similarly takes the past and current location points to determine distance over time.
-Bar position and velocity metrics will be saved continually to be outputted intra-set and for viewing after a set. \par
-
-\section{Evaluation Metrics}
-The stated goals of the project are to deliver a cheap, accessible, and accurate velocity and path tracking application for barbell-based exercise.
-On the whole, QR codes are quite inexpensive to print and only require some form of adhesive to place on a barbell.
-Thus, the resources necessary to use the velocity tracking are far less expensive and far more accessible than a linear position transducer.
-However, our project is slightly more expensive and slightly less accessible than smartphone apps on the market, given that a QR must be printed, whereas those apps require nothing but a phone.
-Nonetheless, this added cost should come with a much needed increase in accuracy compared to the smartphone apps on the market.
-We delineate the exact accuracy evaluation metrics in the velocity accuracy subsection.
-Additionally, we will evaluate the ease-of-use and utility of the app via one round of user testing.
-The specifics are discussed in the app utility subsection.
-\par
-
-\subsection{Participant Selection}
-We will select fifteen users to participate in a joint evaluation on app utility and app accuracy.
-Users will be made aware of the training design and procedure.
-Users will also be informed of the basic advantages of using velocity-based training methods.
-Our hope is that no participant will report any injuries or limitations prior to beginning the study.
-All participants will be familiarized with the exercises used in the study.
-Lastly, users will sign a written informed consent form. \par
-
-\subsection{Study Design}
-Participants will utilize the app for two different exercises: barbell back squat and barbell bench press.
-Prior to starting, participants will fill out a pre-study questionnaire.
-After finishing the survey, participants will begin with the active portion.
-For each of the two exercises, participants will perform a progressive loading test consisting of increased loads of 15 lbs starting and ending in a range of between 45 lbs and 135 lbs. 
-After each set, participants will take 5 minutes of rest to recover and analyze their bar path and velocity metrics outputted from the app.
-The magnitude of errors and levels of agreement between the app and a gold standard LPT will be calculated for each set for each user. \par
-
-\subsection{Study Methodology}
-After a familiarization session with the exercises and barbell, participants will be allowed time to browse through the app.
-Participants will be asked previously to give their one-repetition maximum to ensure all participants can complete the study with each given weight.
-The following pre-study survey will be expected to be completed by each participant:
-\begin{enumerate}
-  \item How familiar were you with velocity-based training prior to the study?
-  \item Have you used a different velocity/bar path tracking app in the past?
-  \item How often do you train barbell-based exercises on a weekly basis?
-  \item What issues do you have with your current training?
-  \item What features would you expect from a velocity-based training app?
-\end{enumerate}\par
-
-Next, participants will be asked to perform three repetitions at maximum velocity for each weighted increase with 5 minutes of rest in between.
-Participants will be allowed to set up the video recording as they like following hands-off guidance mentioned by the application.
-The video recording will be done using a basic iPhone smartphone.
-In between sets, participants will be allowed to pick up the smartphone to simulate real-world recording and test the project's adaptability in different settings.
-During this time, we will record the output from the LPT and after the participant is done, from the smartphone as well (to be uploaded to the app).
-After completing the study, the following post-study questionnaire will be presented to the participants:
-\begin{enumerate}
-  \item If you've used a similar app before, how would you compare your experiences?
-  \item What parts of the app did you find useful?
-  \item What parts of the app did you NOT find useful?
-  \item What parts of the app did you find difficult to use?
-  \item Would you use the app in the future? Why or why not?
-  \item What is your perception of velocity-based training after this study?
-  \item Are there any additional comments?
-\end{enumerate}
-
-\subsection{Velocity Accuracy}
-To evaluate the accuracy of our app, we will follow standard convention and employ the use of a linear position transducer.
-As stated by Janicijevic et al., LPT's, specifically GymAware and T-Force have been validated multiple times in the literature "as gold-standards in studies designed to validate other velocity monitoring devices"\cite{Janicijevic2021}.
-As such, we will compare our app to a gold-standard device.\par
-
-Reliability analysis will be completed by calculating the levels of agreement and magnitude of error between the LPT and app for each participant.
-To do so, we plan on creating Bland-Altman plots.
-These plots will be scatterplots of the difference between the velocity output of the app and of the LPT compared to the average of the two measurements.
-The magnitude of error will be calculated by taking the difference between the app's output and the LPT and dividing that difference by the LPT velocity measure. \par
-
-The reason for the gradual increase in barbell weight is to ensure reliability is covered for a variety of velocity ranges.
-Similar, but more precise, work was done by Martinez-Cava et al. \cite{Martinez-Cava2020}.
-Correlation will be calculated using the Pearson's correlation coefficient and the intraclass correlation coefficient (ICC).
-Based on the aforementioned work by Martinez-Cava et al., we will set our acceptable reliability at $ICC > 0.990$ \cite{Martinez-Cava2020}. 
-
-\subsection{Project Utility}
-Project utility will be analyzed using the pre and post-survey results after study completion.
-Surveys will be kept anonymous and after reading responses, key themes and reoccurring mentions will be recorded from the responses.
-Importantly, our study will miss a few key determinants of project utility.
-A longitudinal study might reveal issues of adherence, day-to-day bugs, or potential future features.
-Unfortunately, a study over a larger period of time is out of scope for this project.
-As a result, we hope that this study will serve as a gauge of initial utility and interest in VBT, as well as identify any glaring problems with user-app interaction.
-
-\section{Timeline}
-Below, I have laid out a general timeline for each component of the project.
-The idea here is to focus on more complex features before incorporating any user interface or quality-of-life features.
-With that said, the timeline is as follows:
-\begin{itemize}
-    \item\textbf{Summer (May - Early August)} 
-    
-    Conduct further research to investigate potential features and obstacles for project development. These include further research into why currently existing applications cannot sufficiently accurately track velocity and what proponents of VBT need/want in a product.
-    \item\textbf{Semester Start (August 25th-September 6th)}
-    
-    Develop QR code generation feature. Even though this will be easier than the following few features, it is a necessary first step.
-    
-    \item\textbf{Early Semester (September 7th-September 30th)}
-    
-    Develop velocity tracking feature. This is easily the most complex and most instrumental feature of the entire project. As such, I plan on spending a large amount of time developing the velocity tracking. If necessary, this step can leak into October. It involves QR code detection and tracking.
-    \item\textbf{Middle Semester (October 1st-October 20th)}
-    
-    Develop barbell path tracking feature. This is a complementary feature to velocity tracking and as such, it goes after the velocity tracking is complete. I initially believe this feature will be much less complex than velocity tracking, especially because it requires much less accuracy.
-    
-    \item\textbf{Late Middle Semester (October 21th-November 15th)} 
-    
-    Prepare poster to be turned in on November 15th. This time frame will also be used to conduct project evaluations. Depending on the state of the project, this might just be accuracy testing or user testing. If I am in a good place by this point, I can consider adding extra quality-of-life/user interface features.
-    
-    \item\textbf{Late Semester (November 16th-December 5th)}
-    
-    Continuing implementing previously evaluated issues, missing/superfluous features and prepare for presentation. During this time I will fix any potential issues with the project, evaluate missing or superfluous features, and potentially plan for a following semester of work. I should be completely prepared to showcase and present on my final project by December 5th if not a few days before. This time will also be used to prepare my final paper.
-    
-    \item\textbf{End of Semester (December 5th-15th)}
-    
-    Finish final paper and prepare entire project to be submitted. This includes any missing code features, cleaning up code, and making software documentation clear and robust. The goal is to be evaluating minor syntax, clarity, and wording issues by this point and not be focusing on any major changes. All resources will be submitted by December 15th.
-\end{itemize}
-
-The exact final product is still not entirely set. 
-What I mean by that is that whether or not my final project includes user interface features depends on how quickly I am able to develop the velocity and bar path tracking features. 
-Without robustness in these features, the user interface components are essentially meaningless. 
-Thus, the timeline as stated now assumes the "worst case" in which only the major components are developed.
-The plan now is to publish the project as a smartphone application during a following semester.
-All in all though, I feel that my project is quite concrete and I am confident in my ability to develop and present it by the December 15th deadline.
+Regardless, storing health data of app users necessitates careful consideration in terms of data usage and data privacy.
 
 \printbibliography 
 
